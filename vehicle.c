@@ -73,29 +73,41 @@ Parameters: char* representing all information stored for a vehicle
 Returns: Nothing
 */
 void displayVehicle(char* vehicle) {
-    // Extract combined value and year
+    //Extracts combined value and year
     unsigned int combined;
     custom_copy((char*)&combined, vehicle, 4);
 
-    // Extract value (upper 21 bits)
+    //Extracts value (upper 21 bits)
     unsigned int value = combined >> 11;
 
-    // Extract year (lower 11 bits)
+    //Extracts year (lower 11 bits)
     unsigned int year = combined & 0x7FF;
 
-    // Print vehicle details
+    //Prints vehicle details
     printf("Description: %s\n", vehicle + 4);
     printf("Value: $%u\n", value);
     printf("Model Year: %u\n\n", year);
 }
 
+
 /*
 Purpose: Store multiple vehicles in an array. Dynamically allocates an array of char pointers.
 Calls the createVehicle method for each vehicle to be created
 Parameters: int - Number of vehicles to add to the array
-Returns: a dynamically array of char*'s, each pointer representing a vehicle
+Returns: a dynamically allocated array of char*'s, each pointer representing a vehicle
 */
 char** createGarage(int numVehicles) {
+    char** garage = (char**)malloc(numVehicles * sizeof(char*)); //this code will allocate memory for array of vehicle  pointers
+    if (!garage) {
+        printf("Memory allocation failed for garage.\n");
+        exit(1);
+    }
+
+    for (int i = 0; i < numVehicles; i++) {
+        printf("\nCreating vehicle %d:\n", i + 1);
+        garage[i] = createVehicle(); //Create a new vehicle and store in garage
+    }
+    return garage; //This will Return pointer to allocated array
 }
 
 /*
@@ -106,7 +118,15 @@ int - number of vehicles in the garage
 Returns: Nothing.
 */
 void displayGarage(char** garage, int numVehicles) {
+    if (!garage) {
+        printf("Garage is empty.\n");
+        return; // Exit if garage is empty
+    }
 
+    for (int i = 0; i < numVehicles; i++) {
+        printf("\nVehicle %d:\n", i + 1);
+        displayVehicle(garage[i]); //Display details of each vehicle
+    }
 }
 
 /*
@@ -118,8 +138,34 @@ int - index of the vehicle to remove (0 based)
 Returns: a reference to the new dynamically allocated garage
 */
 char** removeVehicle(char** garage, int numVehicles, int index) {
-  
+    if (index < 0 || index >= numVehicles) {
+        printf("Invalid index. No vehicle removed.\n");
+        return garage; //Returns the  original garage if index is out of bounds
+    }
+
+    //this code will free memory of the vehicle being removed
+    free(garage[index]);
+
+    // Allocate new garage with one less vehicle
+    char** newGarage = (char**)malloc((numVehicles - 1) * sizeof(char*));
+    if (!newGarage) {
+        printf("Memory allocation failed for new garage.\n");
+        exit(1);
+    }
+
+    //Copy over all vehicles except the removed one
+    for (int i = 0, j = 0; i < numVehicles; i++) {
+        if (i != index) {
+            newGarage[j++] = garage[i]; //Copy valid vehicles to new array
+        }
+    }
+
+    //Free old garage memory
+    free(garage);
+
+    return newGarage; //Return the updated garage
 }
+
 
 // Test function for garage operations
 void testGarage() {
